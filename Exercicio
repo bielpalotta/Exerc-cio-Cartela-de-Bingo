@@ -1,0 +1,267 @@
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define LINHAS 5
+#define COLUNAS 5
+#define MAX_CARTELAS 100
+
+
+typedef enum
+{
+    B,
+    I,
+    N,
+    G,
+    O
+} Coluna;
+
+
+typedef struct
+{
+    int numeros[LINHAS][COLUNAS];
+} Cartela;
+
+
+
+int gerarNumero(int minimo, int maximo)
+{
+    return minimo + rand() % (maximo - minimo + 1);
+}
+
+
+
+int numeroExiste(int cartela[LINHAS][COLUNAS], int coluna, int numero)
+{
+    int linha;
+
+    for (linha = 0; linha < LINHAS; linha++)
+    {
+        if (cartela[linha][coluna] == numero)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+
+void ordenarColuna(int cartela[LINHAS][COLUNAS], int coluna)
+{
+    int i, j, temp;
+
+    for (i = 0; i < LINHAS - 1; i++)
+    {
+        for (j = i + 1; j < LINHAS; j++)
+        {
+            // Ignora o espaço livre da coluna N
+            if (coluna == N && (i == 2 || j == 2))
+            {
+                continue;
+            }
+
+            if (cartela[i][coluna] > cartela[j][coluna])
+            {
+                temp = cartela[i][coluna];
+                cartela[i][coluna] = cartela[j][coluna];
+                cartela[j][coluna] = temp;
+            }
+        }
+    }
+}
+
+void gerarCartela(int cartela[LINHAS][COLUNAS])
+{
+    int coluna;
+    int linha;
+    int numero;
+    int minimo;
+    int maximo;
+
+    // Inicializa a cartela com zero
+    for (linha = 0; linha < LINHAS; linha++)
+    {
+        for (coluna = 0; coluna < COLUNAS; coluna++)
+        {
+            cartela[linha][coluna] = 0;
+        }
+    }
+
+
+    for (coluna = B; coluna <= O; coluna++)
+    {
+        minimo = coluna * 15 + 1;
+        maximo = (coluna + 1) * 15;
+
+        for (linha = 0; linha < LINHAS; linha++)
+        {
+            // Espaço livre no centro
+            if (coluna == N && linha == 2)
+            {
+                cartela[linha][coluna] = 0;
+                continue;
+            }
+
+            do
+            {
+                numero = gerarNumero(minimo, maximo);
+            }
+            while (numeroExiste(cartela, coluna, numero));
+
+            cartela[linha][coluna] = numero;
+        }
+
+        // Ordena a coluna
+        ordenarColuna(cartela, coluna);
+    }
+}
+
+
+
+int cartelasIguais(Cartela cartela1, Cartela cartela2)
+{
+    int linha;
+    int coluna;
+
+    for (linha = 0; linha < LINHAS; linha++)
+    {
+        for (coluna = 0; coluna < COLUNAS; coluna++)
+        {
+            if (cartela1.numeros[linha][coluna] !=
+                cartela2.numeros[linha][coluna])
+            {
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
+
+
+
+int cartelaExiste(Cartela cartelas[], int quantidade, Cartela novaCartela)
+{
+    int i;
+
+    for (i = 0; i < quantidade; i++)
+    {
+        if (cartelasIguais(cartelas[i], novaCartela))
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+
+void imprimirCartela(Cartela cartela, int numeroCartela)
+{
+    int linha;
+    int coluna;
+
+    printf("\n");
+    printf("          CARTELA %d\n", numeroCartela);
+    printf("    B    I    N    G    O\n");
+
+    printf("  -------------------------\n");
+
+    for (linha = 0; linha < LINHAS; linha++)
+    {
+        printf(" ");
+
+        for (coluna = 0; coluna < COLUNAS; coluna++)
+        {
+            if (cartela.numeros[linha][coluna] == 0)
+            {
+                printf("  X  ");
+            }
+            else
+            {
+                printf("%3d  ", cartela.numeros[linha][coluna]);
+            }
+        }
+
+        printf("\n");
+    }
+
+    printf("  -------------------------\n");
+}
+
+
+
+int main()
+{
+    int quantidade;
+    int i;
+
+
+    int cartelas[ MAX_CARTELAS ][LINHAS][COLUNAS];
+
+
+    Cartela vetorCartelas[MAX_CARTELAS];
+
+    Cartela novaCartela;
+
+    srand(time(NULL));
+
+    printf("=====================================\n");
+    printf("       GERADOR DE CARTELAS BINGO\n");
+    printf("=====================================\n");
+
+    printf("\nQuantas cartelas deseja gerar? ");
+    scanf("%d", &quantidade);
+
+
+    if (quantidade < 1 || quantidade > MAX_CARTELAS)
+    {
+        printf("\nQuantidade invalida!\n");
+        printf("Escolha entre 1 e %d cartelas.\n", MAX_CARTELAS);
+
+        return 1;
+    }
+
+
+    for (i = 0; i < quantidade; i++)
+    {
+        do
+        {
+            gerarCartela(novaCartela.numeros);
+        }
+        while (cartelaExiste(vetorCartelas, i, novaCartela));
+
+        vetorCartelas[i] = novaCartela;
+
+        // Copia a cartela para a matriz tridimensional
+        int linha;
+        int coluna;
+
+        for (linha = 0; linha < LINHAS; linha++)
+        {
+            for (coluna = 0; coluna < COLUNAS; coluna++)
+            {
+                cartelas[i][linha][coluna] =
+                    vetorCartelas[i].numeros[linha][coluna];
+            }
+        }
+    }
+
+    printf("\n\n=====================================\n");
+    printf("          CARTELAS GERADAS\n");
+    printf("=====================================\n");
+
+    for (i = 0; i < quantidade; i++)
+    {
+        imprimirCartela(vetorCartelas[i], i + 1);
+    }
+
+    printf("\nCartelas geradas com sucesso!\n");
+
+    return 0;
+}
+```
